@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga MTG Underworld</title>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --card-bg: #1a1a1e;
+            --accent-color: #ff9f1c;
+            --text-color: #e1e1e6;
+            --text-muted: #8d8d99;
+            --border-color: #29292e;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            text-align: center;
+            color: var(--accent-color);
+            margin-top: 0;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+ /* Tabla de clasificación estilo App */
+        .leaderboard {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .player-row {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.02);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .position {
+            font-weight: bold;
+            font-size: 1.1rem;
+            width: 32px;
+            color: var(--text-muted);
+        }
+
+        .player-row:nth-child(1) .position { color: #ffd700; } /* Oro */
+        .player-row:nth-child(2) .position { color: #c0c0c0; } /* Plata */
+        .player-row:nth-child(3) .position { color: #cd7f32; } /* Bronce */
+
+        .player-info {
+            flex-grow: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .weeks-breakdown {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .total-score {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            padding-left: 12px;
+        }
+
+        /* Panel de control del Organizador */
+        .admin-panel {
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+
+        .admin-toggle {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            text-decoration: underline;
+            margin-bottom: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        input, select {
+            background: #121214;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .weeks-inputs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        button.btn-submit {
+            background: var(--accent-color);
+            color: #000;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+
+        button.btn-submit:hover {
+            background: #e68a00;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h1>Underworld</h1>
+    <div class="subtitle">Tabla de Posiciones - Liga MTG BO1</div>
+
+    <!-- Contenedor de la lista de jugadores -->
+    <div class="leaderboard" id="leaderboard">
+        <!-- Los jugadores se cargarán dinámicamente aquí -->
+    </div>
+
+    <!-- Sección del Organizador -->
+    <div class="admin-panel">
+        <button class="admin-toggle" onclick="toggleAdmin()">⚙️ Panel de Control (Organizador)</button>
+        
+        <div id="admin-form-container" style="display: none;">
+            <!-- Agregar nuevo jugador -->
+            <div class="form-group">
+                <label for="new-player-name">Registrar Nuevo Jugador:</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="new-player-name" placeholder="Nombre del jugador" style="flex-grow: 1;">
+                    <button class="btn-submit" onclick="addPlayer()" style="margin: 0; width: auto; padding: 0 16px;">+</button>
+                </div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 16px 0;">
+
+            <!-- Cargar puntos semanales -->
+            <div class="form-group">
+                <label for="player-select">Seleccionar Jugador:</label>
+                <select id="player-select" onchange="loadPlayerWeeks()">
+                    <option value="">-- Selecciona un jugador --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Puntos por Semana (0 a 12 pts):</label>
+                <div class="weeks-inputs">
+                    <input type="number" id="w1" placeholder="S1" min="0" max="12">
+                    <input type="number" id="w2" placeholder="S2" min="0" max="12">
+                    <input type="number" id="w3" placeholder="S3" min="0" max="12">
+                    <input type="number" id="w4" placeholder="S4" min="0" max="12">
+                </div>
+            </div>
+<button class="btn-submit" onclick="deletePlayer()" style="background: #e63946; color: #fff; margin-bottom: 12px;">❌ Eliminar este Jugador</button>
+            <button class="btn-submit" onclick="saveScores()">Guardar y Actualizar Tabla</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Base de datos local inicial guardada en el dispositivo
+    let players = JSON.parse(localStorage.getItem('mtg_league_players')) || [
+        { name: "Poke", w1: 3, w2: 3, w3: 1, w4: 0 },
+        { name: "Moy", w1: 1, w2: 3, w3: 0, w4: 0 },
+        { name: "Alejandro", w1: 0, w2: 0, w3: 3, w4: 0 }
+    ];
+
+    function saveToStorage() {
+        localStorage.setItem('mtg_league_players', JSON.stringify(players));
+    }
+
+    function calculateTotal(player) {
+        return (parseInt(player.w1) || 0) + (parseInt(player.w2) || 0) + (parseInt(player.w3) || 0) + (parseInt(player.w4) || 0);
+    }
+
+    function renderLeaderboard() {
+        const leaderboardEl = document.getElementById('leaderboard');
+        const selectEl = document.getElementById('player-select');
+        
+        // 1. Ordenar jugadores por Total de puntos (Descendente) y nombre (Ascendente) en caso de empate
+        players.sort((a, b) => {
+            const totalA = calculateTotal(a);
+            const totalB = calculateTotal(b);
+            if (totalB !== totalA) {
+                return totalB - totalA;
+            }
+            return a.name.localeCompare(b.name);
+        });
+
+        // 2. Pintar la tabla con lógica de empate para el ranking
+        leaderboardEl.innerHTML = '';
+        
+        let currentRank = 1;
+        
+        players.forEach((player, index) => {
+            const total = calculateTotal(player);
+            
+            // Si no es el primer jugador, comparamos su puntaje con el del jugador anterior
+            if (index > 0) {
+                const previousTotal = calculateTotal(players[index - 1]);
+                // Si tienen puntos diferentes, el ranking se actualiza a su posición real en la lista (index + 1)
+                if (total !== previousTotal) {
+                    currentRank = index + 1;
+                }
+                // Si tienen los mismos puntos, currentRank se queda igual (comparten lugar)
+            }
+
+            // Asignar colores especiales a los tres primeros rangos
+            let positionColor = 'var(--text-muted)';
+            if (currentRank === 1) positionColor = '#ffd700'; // Oro
+            if (currentRank === 2) positionColor = '#c0c0c0'; // Plata
+            if (currentRank === 3) positionColor = '#cd7f32'; // Bronce
+
+            leaderboardEl.innerHTML += `
+                <div class="player-row">
+                    <div class="position" style="color: ${positionColor};">${currentRank}°</div>
+                    <div class="player-info">
+                        <div class="player-name">${player.name}</div>
+                        <div class="weeks-breakdown">S1: ${player.w1} | S2: ${player.w2} | S3: ${player.w3} | S4: ${player.w4}</div>
+                    </div>
+                    <div class="total-score">${total} pts</div>
+                </div>
+            `;
+        });
+
+        // 3. Actualizar el selector del administrador
+        const currentSelection = selectEl.value;
+        selectEl.innerHTML = '<option value="">-- Selecciona un jugador --</option>';
+        players.forEach(player => {
+            selectEl.innerHTML += `<option value="${player.name}">${player.name}</option>`;
+        });
+        selectEl.value = currentSelection;
+    }
+
+    function toggleAdmin() {
+        const formContainer = document.getElementById('admin-form-container');
+        formContainer.style.display = formContainer.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function addPlayer() {
+        const nameInput = document.getElementById('new-player-name');
+        const name = nameInput.value.trim();
+        
+        if (!name) return alert('Escribe un nombre válido');
+        if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) return alert('Este jugador ya está registrado');
+
+        players.push({ name: name, w1: 0, w2: 0, w3: 0, w4: 0 });
+        nameInput.value = '';
+        saveToStorage();
+        renderLeaderboard();
+    }
+
+    function loadPlayerWeeks() {
+        const selectedName = document.getElementById('player-select').value;
+        if (!selectedName) {
+            clearWeekInputs();
+            return;
+        }
+        const player = players.find(p => p.name === selectedName);
+        if (player) {
+            document.getElementById('w1').value = player.w1;
+            document.getElementById('w2').value = player.w2;
+            document.getElementById('w3').value = player.w3;
+            document.getElementById('w4').value = player.w4;
+        }
+    }
+function deletePlayer() {
+        const selectedName = document.getElementById('player-select').value;
+        if (!selectedName) return alert('Selecciona un jugador primero para poder eliminarlo');
+
+        // Confirmación de seguridad para no borrar por error
+        const confirmacion = confirm(`¿Estás seguro de que deseas eliminar por completo a ${selectedName} de la liga?`);
+        
+        if (confirmacion) {
+            // Filtramos la lista para quitar al jugador seleccionado
+            players = players.filter(p => p.name !== selectedName);
+            
+            saveToStorage();
+            renderLeaderboard();
+            clearWeekInputs();
+            document.getElementById('player-select').value = '';
+            alert('Jugador eliminado correctamente');
+        }
+    }
+
+    function clearWeekInputs() {
+        document.getElementById('w1').value = '';
+        document.getElementById('w2').value = '';
+        document.getElementById('w3').value = '';
+        document.getElementById('w4').value = '';
+    }
+
+    function saveScores() {
+        const selectedName = document.getElementById('player-select').value;
+        if (!selectedName) return alert('Selecciona un jugador primero');
+
+        const player = players.find(p => p.name === selectedName);
+        if (player) {
+            player.w1 = parseInt(document.getElementById('w1').value) || 0;
+            player.w2 = parseInt(document.getElementById('w2').value) || 0;
+            player.w3 = parseInt(document.getElementById('w3').value) || 0;
+            player.w4 = parseInt(document.getElementById('w4').value) || 0;
+            
+            saveToStorage();
+            renderLeaderboard();
+            clearWeekInputs();
+            document.getElementById('player-select').value = '';
+            alert('¡Puntajes actualizados con éxito!');
+        }
+    }
+
+    // Inicializar la tabla al cargar
+    renderLeaderboard();
+</script>
+
+</body>
+</html>
